@@ -1,40 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
-
-// Variable global para el usuario
-declare global {
-    var currentUser: { nombre: string; email: string } | null;
-}
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 export default function CourseLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const [user, setUser] = useState<{ nombre: string; email: string } | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { user, loading, logout } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
-        // Verificar si el usuario está autenticado
-        if (global.currentUser) {
-            setUser(global.currentUser);
-        } else {
-            // Si no hay usuario, redirigir al login
+        // Si no está cargando y no hay usuario, redirigir al login
+        if (!loading && !user) {
             router.push('/login');
         }
-        setLoading(false);
-    }, [router]);
 
-    const handleLogout = () => {
-        // Limpiar el usuario global
-        global.currentUser = null;
-        setUser(null);
-        router.push('/login');
-    };
+        // Si hay usuario pero no está activo, redirigir a compra
+        if (!loading && user && !user.isActive) {
+            router.push('/purchase');
+        }
+    }, [user, loading, router]);
 
     if (loading) {
         return (
@@ -48,6 +38,10 @@ export default function CourseLayout({
         return null; // No mostrar nada mientras redirige
     }
 
+    if (!user.isActive) {
+        return null; // No mostrar nada mientras redirige a compra
+    }
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
@@ -57,11 +51,11 @@ export default function CourseLayout({
                         <h1 className="text-xl font-semibold text-gray-900">Mi Curso</h1>
                     </div>
                     <div className="flex items-center space-x-4">
-                        <span className="text-sm text-gray-600">
+                        <Link href="/profile" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                             Bienvenido, {user.nombre}
-                        </span>
+                        </Link>
                         <button
-                            onClick={handleLogout}
+                            onClick={logout}
                             className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm font-medium"
                         >
                             Cerrar sesión

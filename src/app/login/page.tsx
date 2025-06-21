@@ -1,25 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-// Variable global para el usuario (en una aplicación real usarías un contexto o estado global)
-declare global {
-    var currentUser: { nombre: string; email: string } | null;
-}
-
-// Inicializar la variable global si no existe
-if (typeof global.currentUser === 'undefined') {
-    global.currentUser = null;
-}
+import { useAuth } from '@/contexts/AuthContext';
+import { LoginForm } from '@/types';
 
 export default function Login() {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<LoginForm>({
         email: '',
         password: ''
     });
-    const router = useRouter();
+    const { login } = useAuth();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -29,37 +21,55 @@ export default function Login() {
         }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Simular login exitoso (placeholder)
-        // En una aplicación real, aquí harías la validación con el backend
-        if (formData.email && formData.password) {
-            // Establecer el usuario global
-            global.currentUser = {
-                nombre: formData.email.split('@')[0], // Usar la parte del email como nombre
-                email: formData.email
-            };
-
-            console.log('Usuario logueado:', global.currentUser);
-
-            // Redirigir al home
-            router.push('/home');
+        setIsSubmitting(true);
+        try {
+            await login(formData.email, formData.password);
+        } catch (error) {
+            console.error('Login failed:', error);
+            // Aquí podrías mostrar un mensaje de error al usuario
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Iniciar sesión
-                    </h2>
+        <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+            {/* Header */}
+            <header className="bg-white/10 backdrop-blur-sm border-b border-white/20">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center py-4">
+                        <Link href="/" className="text-2xl font-bold text-white hover:text-indigo-200 transition-colors">
+                            Mi Curso
+                        </Link>
+                        <div className="flex space-x-4">
+                            <Link
+                                href="/signup"
+                                className="text-white hover:text-indigo-200 transition-colors"
+                            >
+                                Registrarse
+                            </Link>
+                        </div>
+                    </div>
                 </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    <div className="rounded-md shadow-sm -space-y-px">
+            </header>
+
+            {/* Main Content */}
+            <main className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-20">
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 border border-white/20">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-white mb-4">
+                            Bienvenido de Vuelta
+                        </h1>
+                        <p className="text-indigo-200">
+                            Inicia sesión para acceder a tu curso
+                        </p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label htmlFor="email" className="sr-only">
+                            <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
                                 Email
                             </label>
                             <input
@@ -68,14 +78,15 @@ export default function Login() {
                                 type="email"
                                 autoComplete="email"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Email"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="tu@email.com"
                                 value={formData.email}
                                 onChange={handleInputChange}
                             />
                         </div>
+
                         <div>
-                            <label htmlFor="password" className="sr-only">
+                            <label htmlFor="password" className="block text-sm font-medium text-white mb-2">
                                 Contraseña
                             </label>
                             <input
@@ -84,30 +95,29 @@ export default function Login() {
                                 type="password"
                                 autoComplete="current-password"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Contraseña"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="Tu contraseña"
                                 value={formData.password}
                                 onChange={handleInputChange}
                             />
                         </div>
-                    </div>
 
-                    <div>
                         <button
                             type="submit"
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            disabled={isSubmitting}
+                            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-md font-medium hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
-                            Iniciar sesión
+                            {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                         </button>
-                    </div>
+                    </form>
 
-                    <div className="text-center">
-                        <Link href="/signup" className="text-indigo-600 hover:text-indigo-500">
+                    <div className="mt-6 text-center">
+                        <Link href="/signup" className="text-indigo-200 hover:text-white transition-colors">
                             ¿No tienes cuenta? Regístrate
                         </Link>
                     </div>
-                </form>
-            </div>
+                </div>
+            </main>
         </div>
     );
 } 

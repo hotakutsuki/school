@@ -1,76 +1,33 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
-interface SidebarItem {
-    id: string;
-    title: string;
-    href: string;
-    children?: SidebarItem[];
-}
-
-interface ChapterGroup {
-    id: string;
-    title: string;
-    items: SidebarItem[];
-}
-
-const chapterGroups: ChapterGroup[] = [
+const chapters = [
     {
-        id: 'introduccion',
         title: 'Introducción',
-        items: [
-            {
-                id: 'introduccion',
-                title: 'Introducción al Curso',
-                href: '/home/introduccion'
-            }
-        ]
+        slug: 'introduccion',
+        pages: [{ name: 'Bienvenida', path: '/course/introduccion' }],
     },
     {
-        id: 'capitulo1',
-        title: 'Capítulo 1',
-        items: [
-            {
-                id: 'capitulo1-video',
-                title: 'Video',
-                href: '/home/capitulo1/video'
-            },
-            {
-                id: 'capitulo1-texto',
-                title: 'Texto',
-                href: '/home/capitulo1/texto'
-            },
-            {
-                id: 'capitulo1-preguntas',
-                title: 'Preguntas',
-                href: '/home/capitulo1/preguntas'
-            }
-        ]
+        title: 'Capítulo 1: Fundamentos',
+        slug: 'capitulo1',
+        pages: [
+            { name: 'Video', path: '/course/capitulo1/video' },
+            { name: 'Texto', path: '/course/capitulo1/texto' },
+            { name: 'Preguntas', path: '/course/capitulo1/preguntas' },
+        ],
     },
     {
-        id: 'capitulo2',
-        title: 'Capítulo 2',
-        items: [
-            {
-                id: 'capitulo2-video',
-                title: 'Video',
-                href: '/home/capitulo2/video'
-            },
-            {
-                id: 'capitulo2-texto',
-                title: 'Texto',
-                href: '/home/capitulo2/texto'
-            },
-            {
-                id: 'capitulo2-preguntas',
-                title: 'Preguntas',
-                href: '/home/capitulo2/preguntas'
-            }
-        ]
-    }
+        title: 'Capítulo 2: Avanzado',
+        slug: 'capitulo2',
+        pages: [
+            { name: 'Video', path: '/course/capitulo2/video' },
+            { name: 'Texto', path: '/course/capitulo2/texto' },
+            { name: 'Preguntas', path: '/course/capitulo2/preguntas' },
+        ],
+    },
 ];
 
 export default function Sidebar() {
@@ -127,14 +84,14 @@ export default function Sidebar() {
                 {/* Lista de capítulos */}
                 <nav className="p-4 flex-1 overflow-y-auto">
                     <ul className="space-y-1">
-                        {chapterGroups.map((chapter) => (
-                            <li key={chapter.id}>
+                        {chapters.map((chapter) => (
+                            <li key={chapter.slug}>
                                 {/* Encabezado del capítulo */}
                                 <button
-                                    onClick={() => toggleChapter(chapter.id)}
+                                    onClick={() => toggleChapter(chapter.slug)}
                                     className={`
                     w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors
-                    ${isChapterExpanded(chapter.id)
+                    ${isChapterExpanded(chapter.slug)
                                             ? 'bg-gray-100 text-gray-900'
                                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                         }
@@ -142,7 +99,7 @@ export default function Sidebar() {
                                 >
                                     <span>{chapter.title}</span>
                                     <svg
-                                        className={`w-4 h-4 transition-transform duration-200 ${isChapterExpanded(chapter.id) ? 'rotate-180' : ''
+                                        className={`w-4 h-4 transition-transform duration-200 ${isChapterExpanded(chapter.slug) ? 'rotate-180' : ''
                                             }`}
                                         fill="none"
                                         stroke="currentColor"
@@ -153,22 +110,22 @@ export default function Sidebar() {
                                 </button>
 
                                 {/* Contenido del acordeón */}
-                                {isChapterExpanded(chapter.id) && (
+                                {isChapterExpanded(chapter.slug) && (
                                     <ul className="mt-1 ml-4 space-y-1">
-                                        {chapter.items.map((item) => (
-                                            <li key={item.id}>
+                                        {chapter.pages.map((page) => (
+                                            <li key={page.path}>
                                                 <Link
-                                                    href={item.href}
+                                                    href={page.path}
                                                     className={`
                     block px-3 py-2 rounded-md text-sm transition-colors
-                    ${isCurrentPath(item.href)
+                    ${isCurrentPath(page.path)
                                                             ? 'bg-indigo-100 text-indigo-700 font-medium'
                                                             : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                                                         }
                   `}
                                                     onClick={() => setIsOpen(false)}
                                                 >
-                                                    {item.title}
+                                                    {page.name}
                                                 </Link>
                                             </li>
                                         ))}

@@ -3,17 +3,12 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Variable global para el usuario
-declare global {
-    var currentUser: { nombre: string; email: string } | null;
-}
-
-export default function HomePage() {
+export default function CoursePage() {
     const router = useRouter();
 
     useEffect(() => {
         // Redirigir a la introducción del curso
-        router.push('/home/introduccion');
+        router.push('/course/introduccion');
     }, [router]);
 
     return (
