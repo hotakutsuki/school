@@ -1,63 +1,94 @@
-# Aplicación de Autenticación Next.js
+# Next.js Authentication Course Application
 
-Esta es una aplicación Next.js con funcionalidad básica de autenticación usando React y TypeScript.
+This is a Next.js application with basic authentication functionality using React and TypeScript.
 
-## Características
+## Features
 
-- **Registro de usuarios**: Formulario para crear nuevas cuentas
-- **Login**: Autenticación de usuarios existentes
-- **Página de inicio protegida**: Solo accesible para usuarios autenticados
-- **Diseño responsive**: Interfaz moderna con Tailwind CSS
+- **User Registration**: Form to create new accounts
+- **Login**: Authentication for existing users
+- **Protected Home Page**: Only accessible to authenticated users
+- **Responsive Design**: Modern interface with Tailwind CSS
+- **Course Navigation**: Sidebar with chapter organization
+- **Interactive Content**: Videos, text content, and quizzes
 
-## Rutas disponibles
+## Available Routes
 
-1. `/` - Redirige automáticamente a `/login`
-2. `/signup` - Página de registro
-3. `/login` - Página de inicio de sesión
-4. `/home` - Página principal (requiere autenticación)
+1. `/` - Automatically redirects to `/login`
+2. `/signup` - Registration page
+3. `/login` - Login page
+4. `/home` - Main page (requires authentication)
+5. `/home/introduccion` - Course introduction
+6. `/home/capitulo1/video` - Chapter 1 video
+7. `/home/capitulo1/texto` - Chapter 1 text content
+8. `/home/capitulo1/preguntas` - Chapter 1 quiz
+9. `/home/capitulo2/video` - Chapter 2 video
+10. `/home/capitulo2/texto` - Chapter 2 text content
+11. `/home/capitulo2/preguntas` - Chapter 2 quiz
 
-## Funcionalidad
+## Functionality
 
-### Registro (`/signup`)
-- Formulario con campos: Nombre, Teléfono, Email
-- Botón de registro (placeholder - no hace nada por ahora)
-- Enlace para ir al login
+### Registration (`/signup`)
+- Form with fields: Name, Phone, Email
+- Registration button (placeholder - does nothing for now)
+- Link to go to login
 
 ### Login (`/login`)
-- Formulario con campos: Email, Contraseña
-- Al hacer login exitoso, establece una variable global de usuario
-- Redirige automáticamente a `/home`
+- Form with fields: Email, Password
+- On successful login, sets a global user variable
+- Automatically redirects to `/home`
 
-### Home (`/home`)
-- Verifica si el usuario está autenticado
-- Si no hay usuario, redirige a `/login`
-- Muestra el nombre del usuario en el centro de la pantalla
-- Incluye botón de cerrar sesión
+### Course Home (`/home`)
+- Verifies if user is authenticated
+- If no user, redirects to `/login`
+- Shows course navigation with sidebar
+- Includes logout button
 
-## Tecnologías utilizadas
+### Course Content
+- **Introduction**: Welcome content with course overview
+- **Videos**: Embedded YouTube videos for each chapter
+- **Text Content**: Detailed theoretical content with Lorem Ipsum placeholders
+- **Quizzes**: Interactive questionnaires with multiple choice questions
 
-- **Next.js 15** - Framework de React
-- **React 19** - Biblioteca de UI
-- **TypeScript** - Tipado estático
-- **Tailwind CSS** - Framework de CSS
+## Technologies Used
 
-## Instalación y ejecución
+- **Next.js 15** - React framework
+- **React 19** - UI library
+- **TypeScript** - Static typing
+- **Tailwind CSS** - CSS framework
 
-1. Instalar dependencias:
+## Installation and Setup
+
+1. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Ejecutar en modo desarrollo:
+2. Run in development mode:
 ```bash
 npm run dev
 ```
 
-3. Abrir [http://localhost:3000](http://localhost:3000) en tu navegador
+3. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Notas importantes
+## Course Structure
 
-- Esta es una implementación básica con variables globales
-- En una aplicación real, deberías usar un contexto de React o un estado global más robusto
-- La autenticación es simulada (placeholder)
-- Los datos no se persisten entre recargas de página
+The application includes a course with the following structure:
+
+- **Introduction**: Course overview and objectives
+- **Chapter 1**: 
+  - Video: Fundamentals with embedded YouTube content
+  - Text: Detailed theoretical content
+  - Quiz: Interactive assessment
+- **Chapter 2**:
+  - Video: Advanced concepts
+  - Text: In-depth theoretical material
+  - Quiz: Advanced assessment
+
+## Important Notes
+
+- This is a basic implementation using global variables
+- In a real application, you should use React context or a more robust global state
+- Authentication is simulated (placeholder)
+- Data is not persisted between page reloads
+- The sidebar uses an accordion structure for better organization
+- All content uses placeholder data (Lorem Ipsum, sample videos, mock quizzes)
