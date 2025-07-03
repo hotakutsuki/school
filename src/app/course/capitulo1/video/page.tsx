@@ -20,10 +20,10 @@ export default function Capitulo1Video() {
                 <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                     <iframe
                         className="absolute top-0 left-0 w-full h-full rounded-lg"
-                        src="https://www.youtube.com/embed/deDiQOxuAGc?si=BNuXUJ97CJ88Puf5"
+                        src="https://www.youtube.com/embed/Culh5vSzHoE?modestbranding=1&rel=0&showinfo=0&controls=1&disablekb=1&fs=0"
                         title="Capítulo 1 - Fundamentos Básicos"
                         frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
                     ></iframe>
                 </div>

@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Person, SignupForm } from '@/types';
+import { SignupForm } from '@/types';
+import { db } from '@/utils/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function SignUp() {
     const [formData, setFormData] = useState<SignupForm>({
@@ -12,6 +14,7 @@ export default function SignUp() {
         email: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,28 +28,32 @@ export default function SignUp() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setError(null);
+        try {
+            // Generar un ID único para el lead
+            const leadId = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        // Crear un lead (persona con isActive: false)
-        const newLead: Person = {
-            ...formData,
-            isActive: false,
-            fechaRegistro: new Date()
-        };
+            // Guardar lead en Firestore
+            await setDoc(doc(db, 'leads', leadId), {
+                nombre: formData.nombre,
+                telefono: formData.telefono,
+                email: formData.email,
+                fechaRegistro: new Date(),
+                isActive: false,
+                leadId: leadId
+            });
 
-        // Simular envío de datos (en una app real, aquí se enviarían a un backend)
-        console.log('Lead creado:', newLead);
-
-        // Guardar en localStorage para simular persistencia
-        const existingLeads = JSON.parse(localStorage.getItem('leads') || '[]');
-        existingLeads.push(newLead);
-        localStorage.setItem('leads', JSON.stringify(existingLeads));
-
-        // Simular delay de procesamiento
-        setTimeout(() => {
-            setIsSubmitting(false);
             // Redirigir al seminario
             router.push('/seminar');
-        }, 1500);
+        } catch (err) {
+            if (typeof err === 'object' && err && 'message' in err) {
+                setError((err as { message: string }).message || 'Error al registrar usuario');
+            } else {
+                setError('Error al registrar usuario');
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -130,6 +137,10 @@ export default function SignUp() {
                                 onChange={handleInputChange}
                             />
                         </div>
+
+                        {error && (
+                            <div className="text-red-400 text-sm text-center">{error}</div>
+                        )}
 
                         <button
                             type="submit"

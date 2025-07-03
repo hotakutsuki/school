@@ -101,6 +101,12 @@ export default function HomePage() {
                                 >
                                     Seminario Gratuito
                                 </Link>
+                                <Link
+                                    href="/purchase"
+                                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-colors"
+                                >
+                                    Comprar Curso
+                                </Link>
                             </div>
                         )}
                     </div>

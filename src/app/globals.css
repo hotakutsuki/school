@@ -24,3 +24,72 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Estilos para ocultar elementos no deseados en videos de YouTube */
+.youtube-embed {
+  position: relative;
+}
+
+.youtube-embed iframe {
+  pointer-events: none;
+}
+
+/* Ocultar botón de compartir y otros elementos de YouTube */
+.youtube-embed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Estilos para videos de YouTube - permitir controles pero bloquear compartir */
+.youtube-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.youtube-container iframe {
+  /* Permitir interacciones básicas */
+  pointer-events: auto;
+}
+
+/* Overlay que bloquea solo ciertas áreas (botón de compartir) */
+.youtube-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 2;
+  /* Solo bloquear en áreas específicas donde aparece el botón de compartir */
+  pointer-events: none;
+}
+
+/* Bloquear específicamente el área del botón de compartir */
+.youtube-container::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+/* Permitir controles de reproducción pero bloquear elementos de compartir */
+.youtube-container iframe:hover {
+  pointer-events: auto;
+}
+
+/* Estilos específicos para iframes de YouTube */
+iframe[src*="youtube.com/embed"] {
+  pointer-events: auto;
+}

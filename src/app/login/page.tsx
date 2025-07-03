@@ -12,6 +12,7 @@ export default function Login() {
     });
     const { login } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -24,11 +25,17 @@ export default function Login() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setError(null);
+
         try {
             await login(formData.email, formData.password);
         } catch (error) {
             console.error('Login failed:', error);
-            // Aquí podrías mostrar un mensaje de error al usuario
+            if (typeof error === 'object' && error && 'message' in error) {
+                setError((error as { message: string }).message);
+            } else {
+                setError('Error al iniciar sesión. Verifica tu email y contraseña.');
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -66,6 +73,12 @@ export default function Login() {
                             Inicia sesión para acceder a tu curso
                         </p>
                     </div>
+
+                    {error && (
+                        <div className="bg-red-500/20 backdrop-blur-sm rounded-lg p-4 border border-red-500/30 mb-6">
+                            <p className="text-red-300 text-center">{error}</p>
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
@@ -114,6 +127,12 @@ export default function Login() {
                     <div className="mt-6 text-center">
                         <Link href="/signup" className="text-indigo-200 hover:text-white transition-colors">
                             ¿No tienes cuenta? Regístrate
+                        </Link>
+                    </div>
+
+                    <div className="mt-4 text-center">
+                        <Link href="/purchase" className="text-indigo-200 hover:text-white transition-colors">
+                            ¿Quieres comprar el curso?
                         </Link>
                     </div>
                 </div>

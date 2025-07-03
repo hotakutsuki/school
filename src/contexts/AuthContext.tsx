@@ -2,15 +2,26 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Person } from '@/types';
-import { findLeadByEmail, updateLeadToActiveUser } from '@/utils/auth';
+import { auth } from '@/utils/firebase';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { getUserByUid } from '@/utils/auth';
+
+// Interfaz para el usuario
+interface UserData {
+    uid: string;
+    email: string | null;
+    nombre: string;
+    telefono: string;
+    isActive: boolean;
+    fechaRegistro: Date;
+    leadId?: string;
+}
 
 interface AuthContextType {
-    user: Person | null;
+    user: UserData | null;
     login: (email: string, password: string) => Promise<void>;
     logout: () => void;
     loading: boolean;
-    activateUser: () => void;
 }
 
 // Crear el contexto
@@ -27,98 +38,79 @@ export function useAuth() {
 
 // Proveedor del contexto
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<Person | null>(null);
+    const [user, setUser] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    // Verificar si hay un usuario guardado al cargar
+    // Escuchar cambios en el estado de autenticación
     useEffect(() => {
-        // Verificar sesión persistente
-        const savedUser = localStorage.getItem('user');
-        const sessionToken = localStorage.getItem('sessionToken');
-
-        if (savedUser && sessionToken) {
-            try {
-                const parsedUser = JSON.parse(savedUser);
-                setUser(parsedUser);
-            } catch (error) {
-                console.error('Error parsing saved user:', error);
-                localStorage.removeItem('user');
-                localStorage.removeItem('sessionToken');
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
+            if (firebaseUser) {
+                // Obtener datos del usuario desde Firestore
+                const userData = await getUserByUid(firebaseUser.uid);
+                if (userData) {
+                    setUser({
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                        nombre: userData.nombre || '',
+                        telefono: userData.telefono || '',
+                        isActive: userData.isActive || false,
+                        fechaRegistro: userData.fechaRegistro || new Date(),
+                        leadId: userData.leadId
+                    });
+                }
+            } else {
+                setUser(null);
             }
-        }
-        setLoading(false);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, []);
 
     const login = async (email: string, password: string) => {
-        // Simular login exitoso (placeholder)
-        // En una aplicación real, aquí harías la validación con el backend
-        if (email && password) {
-            // Primero buscar si existe como lead
-            const existingLead = findLeadByEmail(email);
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const firebaseUser = userCredential.user;
 
-            let newUser: Person;
+            // Obtener datos del usuario desde Firestore
+            const userData = await getUserByUid(firebaseUser.uid);
 
-            if (existingLead) {
-                // Si existe como lead, usar sus datos pero mantener isActive como estaba
-                newUser = {
-                    ...existingLead,
-                    // Mantener el estado de isActive que ya tenía
-                };
-            } else {
-                // Si no existe, crear un nuevo usuario con isActive: false
-                newUser = {
-                    nombre: email.split('@')[0], // Usar la parte del email como nombre
-                    email: email,
-                    telefono: '', // En un login real, esto vendría de la base de datos
-                    isActive: false, // Por defecto inactivo hasta que compre
-                    fechaRegistro: new Date()
+            if (userData) {
+                const fullUser: UserData = {
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email,
+                    nombre: userData.nombre || '',
+                    telefono: userData.telefono || '',
+                    isActive: userData.isActive || false,
+                    fechaRegistro: userData.fechaRegistro || new Date(),
+                    leadId: userData.leadId
                 };
 
-                // Guardar el nuevo usuario en la lista de leads
-                const existingLeads = JSON.parse(localStorage.getItem('leads') || '[]');
-                existingLeads.push(newUser);
-                localStorage.setItem('leads', JSON.stringify(existingLeads));
-            }
+                setUser(fullUser);
 
-            // Crear sesión persistente
-            const sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-            setUser(newUser);
-            localStorage.setItem('user', JSON.stringify(newUser));
-            localStorage.setItem('sessionToken', sessionToken);
-
-            console.log('Usuario logueado:', newUser);
-
-            // Verificar si el usuario está activo
-            if (newUser.isActive) {
-                // Redirigir al curso
-                router.push('/course');
+                // Redirigir según el estado del usuario
+                if (userData.isActive) {
+                    router.push('/course');
+                } else {
+                    router.push('/purchase');
+                }
             } else {
-                // Redirigir a la página de compra
-                router.push('/purchase');
+                throw new Error('Datos de usuario no encontrados');
             }
+        } catch (error) {
+            console.error('Error en login:', error);
+            throw error;
         }
     };
 
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('user');
-        localStorage.removeItem('sessionToken');
-        router.push('/login');
-    };
-
-    const activateUser = () => {
-        if (user) {
-            // Activar el usuario
-            const activatedUser = updateLeadToActiveUser(user.email);
-            if (activatedUser) {
-                setUser(activatedUser);
-                localStorage.setItem('user', JSON.stringify(activatedUser));
-                console.log('Usuario activado:', activatedUser);
-                // Redirigir al curso
-                router.push('/course');
-            }
+    const logout = async () => {
+        try {
+            await signOut(auth);
+            setUser(null);
+            router.push('/');
+        } catch (error) {
+            console.error('Error en logout:', error);
         }
     };
 
@@ -126,8 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         login,
         logout,
-        loading,
-        activateUser
+        loading
     };
 
     return (

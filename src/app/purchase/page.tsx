@@ -1,31 +1,110 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { findLeadByEmail } from '@/utils/auth';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function PurchasePage() {
     const [isProcessing, setIsProcessing] = useState(false);
-    const { user, activateUser } = useAuth();
+    const [error, setError] = useState<string | null>(null);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const { user, loading } = useAuth();
+    const router = useRouter();
 
-    const handlePurchase = async () => {
-        setIsProcessing(true);
+    // Redirigir usuarios activos al curso
+    useEffect(() => {
+        if (!loading && user && user.isActive) {
+            router.push('/course');
+        }
+    }, [user, loading, router]);
 
-        // Simular proceso de pago
-        setTimeout(() => {
-            // Activar el usuario
-            activateUser();
-            setIsProcessing(false);
-        }, 2000);
-    };
-
-    if (!user) {
+    // Mostrar loading mientras se verifica el estado del usuario
+    if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-xl">Redirigiendo al login...</div>
+            <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+                <div className="text-white text-xl">Cargando...</div>
             </div>
         );
     }
+
+    // Si el usuario está activo, no mostrar nada (será redirigido)
+    if (user && user.isActive) {
+        return null;
+    }
+
+    const handlePurchase = async () => {
+        if (!email || !email.includes('@')) {
+            setError('Por favor ingresa un email válido');
+            return;
+        }
+        if (password.length < 6) {
+            setError('La contraseña debe tener al menos 6 caracteres');
+            return;
+        }
+        if (password !== confirmPassword) {
+            setError('Las contraseñas no coinciden');
+            return;
+        }
+        setIsProcessing(true);
+        setError(null);
+        try {
+            // Simular proceso de pago (aquí iría tu integración con Stripe)
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Buscar datos del lead si existe
+            const lead = await findLeadByEmail(email);
+            let nombre = '';
+            let telefono = '';
+            if (lead) {
+                nombre = lead.nombre;
+                telefono = lead.telefono;
+            }
+
+            // Crear usuario en Firebase Auth y en Firestore
+            // Usar una función similar a activateUserAfterPurchase pero con contraseña proporcionada
+            // Aquí reimplementamos la lógica para aceptar la contraseña del usuario
+            const { auth, db } = await import('@/utils/firebase');
+            const { createUserWithEmailAndPassword } = await import('firebase/auth');
+            const { doc, setDoc } = await import('firebase/firestore');
+
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            await setDoc(doc(db, 'users', user.uid), {
+                nombre,
+                telefono,
+                email,
+                fechaRegistro: new Date(),
+                isActive: true,
+                leadId: lead ? lead.id : null
+            });
+
+            // Si existe el lead, actualizarlo a activo
+            if (lead) {
+                const { updateDoc } = await import('firebase/firestore');
+                await updateDoc(doc(db, 'leads', lead.id), {
+                    isActive: true,
+                    userId: user.uid,
+                    fechaActivacion: new Date()
+                });
+            }
+
+            alert('¡Compra exitosa! Ya puedes acceder al curso con tu email y contraseña.');
+            window.location.href = '/course';
+        } catch (err) {
+            if (typeof err === 'object' && err && 'message' in err) {
+                setError((err as { message: string }).message);
+            } else {
+                setError('Error al procesar la compra');
+            }
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
@@ -37,9 +116,12 @@ export default function PurchasePage() {
                             Mi Curso
                         </Link>
                         <div className="flex space-x-4">
-                            <span className="text-white">
-                                Bienvenido, {user.nombre}
-                            </span>
+                            <Link
+                                href="/login"
+                                className="text-white hover:text-indigo-200 transition-colors"
+                            >
+                                Iniciar Sesión
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -54,6 +136,73 @@ export default function PurchasePage() {
                     <p className="text-xl text-indigo-200">
                         Desbloquea todo el contenido y transforma tu carrera
                     </p>
+                </div>
+
+                {/* Email & Password Input */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 border border-white/20 max-w-2xl mx-auto mb-8">
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-bold text-white mb-4">
+                            Tus Datos de Acceso
+                        </h2>
+                        <p className="text-indigo-200">
+                            Ingresa el email y la contraseña con la que accederás al curso
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
+                                Email
+                            </label>
+                            <input
+                                id="email"
+                                type="email"
+                                required
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="tu@email.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-white mb-2">
+                                Contraseña
+                            </label>
+                            <input
+                                id="password"
+                                type="password"
+                                required
+                                minLength={6}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="Crea una contraseña"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-white mb-2">
+                                Confirmar Contraseña
+                            </label>
+                            <input
+                                id="confirmPassword"
+                                type="password"
+                                required
+                                minLength={6}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="Repite la contraseña"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                            />
+                        </div>
+                        <div className="mt-2 text-xs text-yellow-200 opacity-80">
+                            ¿Problemas para acceder? Escribe a <a href="mailto:support@curso.com" className="underline hover:text-white">support@curso.com</a>
+                        </div>
+                        {error && (
+                            <div className="bg-red-500/20 backdrop-blur-sm rounded-lg p-4 border border-red-500/30">
+                                <p className="text-red-300 text-center">{error}</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Pricing Card */}
@@ -99,7 +248,7 @@ export default function PurchasePage() {
                     {/* Payment Button */}
                     <button
                         onClick={handlePurchase}
-                        disabled={isProcessing}
+                        disabled={isProcessing || !email || !password || !confirmPassword}
                         className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-lg text-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isProcessing ? 'Procesando pago...' : 'Comprar Ahora'}
